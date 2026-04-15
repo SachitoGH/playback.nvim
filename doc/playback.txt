@@ -1,0 +1,160 @@
+*playback.txt*  Record and replay your editing sessions as a ghost
+
+==============================================================================
+CONTENTS                                                    *playback-contents*
+
+  1. Introduction ......................... |playback-introduction|
+  2. Requirements ......................... |playback-requirements|
+  3. Installation ......................... |playback-installation|
+  4. Setup ................................ |playback-setup|
+  5. Usage ................................ |playback-usage|
+  6. Commands ............................. |playback-commands|
+  7. Picker keys .......................... |playback-picker|
+  8. Replay keys .......................... |playback-replay|
+  9. Configuration ........................ |playback-configuration|
+ 10. Storage .............................. |playback-storage|
+ 11. License .............................. |playback-license|
+
+==============================================================================
+1. INTRODUCTION                                         *playback-introduction*
+
+playback.nvim silently records your editing sessions and lets you replay them
+as a ghost in a vertical split.
+
+When you open a file, playback attaches to the buffer and captures every
+change alongside a millisecond timestamp. When the buffer is unloaded, the
+session is saved to disk. Later, open the picker, select a session, and watch
+your past edits play back in real time — pausing, scrubbing speed, or stopping
+at any point.
+
+==============================================================================
+2. REQUIREMENTS                                         *playback-requirements*
+
+- Neovim 0.9+
+- No external dependencies
+
+==============================================================================
+3. INSTALLATION                                         *playback-installation*
+
+Using vim.pack (Neovim 0.11+): >lua
+  vim.pack.add("SachitoGH/playback.nvim")
+<
+
+Using lazy.nvim: >lua
+  { "SachitoGH/playback.nvim" }
+<
+
+==============================================================================
+4. SETUP                                                       *playback-setup*
+
+Call `setup()` somewhere in your config: >lua
+  require("playback").setup()
+<
+
+With options: >lua
+  require("playback").setup({
+    keymap = "<leader>se",
+  })
+<
+
+==============================================================================
+5. USAGE                                                       *playback-usage*
+
+With `auto_record = true` (the default), playback begins capturing the moment
+you open any normal file buffer. No manual action required.
+
+To browse and replay past sessions for the current file, run |:Playback| or
+use the configured keymap.
+
+==============================================================================
+6. COMMANDS                                                 *playback-commands*
+
+                                                                    *:Playback*
+:Playback       Open the session picker for the current file.
+
+==============================================================================
+7. PICKER KEYS                                                *playback-picker*
+
+The picker lists all saved sessions for the current file, showing their age,
+duration, and number of recorded edits.
+
+  Key           Action ~
+  j             Move down
+  k             Move up
+  <Enter>       Replay the selected session
+  d             Delete the selected session
+  q / <Esc>     Close
+
+==============================================================================
+8. REPLAY KEYS                                                *playback-replay*
+
+Playback opens a vertical split with a scratch buffer. The original file is
+not touched.
+
+  Key           Action ~
+  <Space>       Pause / resume
+  =             Increase speed (×1.5, up to 8×)
+  -             Decrease speed (×0.66, down to 0.25×)
+  q / <Esc>     Stop and close
+
+The status line shows current progress, speed, and available keys.
+
+==============================================================================
+9. CONFIGURATION                                       *playback-configuration*
+
+All options with their defaults: >lua
+  require("playback").setup({
+    auto_record         = true,  -- attach to buffers automatically on open
+    max_sessions        = 10,    -- sessions to keep per file (oldest pruned)
+    min_duration_secs   = 30,    -- sessions shorter than this are discarded
+    skip_idle_threshold = 3,     -- compress pauses longer than N seconds
+    default_speed       = 1.0,   -- playback speed multiplier
+    keymap              = nil,   -- e.g. "<leader>se" to open the picker
+  })
+<
+
+auto_record~
+  When `true`, playback attaches to every normal file buffer automatically on
+  `BufReadPost` and `BufNewFile`. Set to `false` to disable automatic
+  recording.
+
+max_sessions~
+  Maximum number of sessions to keep per file. When a new session is saved and
+  this limit is exceeded, the oldest sessions are pruned.
+
+min_duration_secs~
+  Sessions shorter than this value (in seconds) are discarded and never written
+  to disk.
+
+skip_idle_threshold~
+  During replay, any pause between events longer than this many seconds is
+  compressed to exactly this threshold, keeping replays watchable.
+
+default_speed~
+  Initial playback speed multiplier. Can be adjusted live during replay with
+  `=` and `-`.
+
+keymap~
+  If set, a normal-mode keymap is registered globally that opens the picker for
+  the current file. Example: `"<leader>se"`.
+
+==============================================================================
+10. STORAGE                                                  *playback-storage*
+
+Sessions are stored as JSON files under: >
+  ~/.local/share/nvim/playback/<hash>_<filename>/<timestamp>.json
+<
+
+Each directory name is derived from a hash of the full file path combined with
+the filename, making it both unique and human-readable. Each JSON file stores
+the initial buffer snapshot, the list of delta events, the session start time,
+and the total duration.
+
+==============================================================================
+11. LICENSE                                                  *playback-license*
+
+MIT License. Copyright (c) 2026 SachitoGH.
+See the LICENSE file distributed with this plugin for details.
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
